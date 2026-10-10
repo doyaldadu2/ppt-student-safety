@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SafeSpace AI – Make it safer to speak up</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F4F8FB;--card:#fff;--ink:#17283A;--muted:#5B6B7B;--line:#DFE8EE;--teal:#1E8E8A;--teal-d:#146B68;--teal-s:#E3F4F2;--sky:#E8F0FB;--lilac:#EEEAFB;--mint:#E6F5EC;--b1:#2B5BA8;--b2:#5B43B5;--b3:#1F7A47;--goalc:#25477A;--riskc:#43308E;--trk:#E4ECF1;--dotc:#C3D2DB;--glass:rgba(255,255,255,.82);--g1:#E6F3F4;--g2:#ECE9FA;color-scheme:light}
+:root[data-theme=dark]{--bg:#0D1822;--card:#14232F;--ink:#E9F2F6;--muted:#9FB2BF;--line:#243745;--teal:#26968F;--teal-d:#82DCD6;--teal-s:#10343A;--sky:#172B47;--lilac:#251F44;--mint:#143327;--b1:#8DB4F0;--b2:#B5A6F4;--b3:#7FD6A4;--goalc:#AECAF6;--riskc:#C8BDF8;--trk:#243745;--dotc:#3A5163;--glass:rgba(20,35,47,.82);--g1:#12303A;--g2:#1B1838;color-scheme:dark}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;background:var(--bg)}
+body{color:var(--ink);font-family:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased}
+h1,h2,h3,p{margin:0}
+h1{font-size:clamp(2.6rem,8vw,5.4rem);line-height:1.02;font-weight:800;letter-spacing:-.04em}
+h2{font-size:clamp(1.7rem,4vw,2.6rem);line-height:1.12;font-weight:800;letter-spacing:-.025em;max-width:17em}
+h3{font-size:1.05rem;font-weight:700}
+.lead{color:var(--muted);font-size:1.05rem;max-width:36em;margin-top:10px}
+.small{font-size:.88rem;color:var(--muted)}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid #7FC6C2;outline-offset:2px;border-radius:10px}
+#sp{width:1px}
+#stage{position:fixed;inset:0;overflow:hidden;perspective:1100px;perspective-origin:50% 42%;background:radial-gradient(900px 600px at 70% 10%,var(--g1),transparent 70%),radial-gradient(800px 600px at 10% 90%,var(--g2),transparent 70%),var(--bg)}
+#world{position:absolute;inset:0;transform-style:preserve-3d}
+.sh{position:absolute;display:block;border-radius:30%;pointer-events:none;border:1.5px solid rgba(30,142,138,.35);will-change:transform,opacity}
+.sh.r{border-radius:50%;background:none!important}
+.c0{background:rgba(30,142,138,.14)}.c1{background:rgba(76,127,208,.14);border-color:rgba(76,127,208,.35)}.c2{background:rgba(122,98,214,.13);border-color:rgba(122,98,214,.35)}.c3{background:rgba(63,168,119,.14);border-color:rgba(63,168,119,.35)}
+.scene{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;will-change:transform,opacity;visibility:hidden}
+.in{width:min(1000px,100%);padding:0 22px;transform-origin:center}
+.top{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;justify-content:space-between;align-items:center;padding:calc(14px + env(safe-area-inset-top,0px)) 22px 14px;pointer-events:none}
+.brand{font-weight:800;letter-spacing:-.02em;display:flex;gap:9px;align-items:center}
+.dot{width:22px;height:22px;border-radius:7px;background:var(--teal);display:grid;place-items:center}.dot::after{content:"";width:8px;height:8px;border-radius:50%;background:#fff}
+#lab{font-weight:700;font-size:.9rem;color:var(--teal-d);background:var(--glass);border:1px solid var(--line);padding:6px 14px;border-radius:99px}
+#bar{position:fixed;top:0;left:0;height:3px;background:var(--teal);width:0;z-index:11}
+#dots{position:fixed;right:14px;top:50%;transform:translateY(-50%);z-index:10;display:grid;gap:9px}
+#dots button{width:10px;height:10px;padding:0;border-radius:50%;border:0;background:var(--dotc);transition:.25s}
+#dots button.on{background:var(--teal);transform:scale(1.5)}
+@media(max-width:600px){#dots{display:none}}
+#hint{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:10;font-size:.85rem;font-weight:700;color:var(--muted);transition:opacity .4s;pointer-events:none;text-align:center}
+#hint b{display:block;width:2px;height:26px;margin:6px auto 0;background:var(--teal);animation:dr 1.6s infinite}
+@keyframes dr{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 20px 40px -28px rgba(23,40,58,.3)}
+.card.tint{background:var(--teal-s);border-color:var(--line);box-shadow:none}
+.chip{display:inline-block;border:1px solid var(--line);background:var(--card);border-radius:99px;padding:8px 18px;font-weight:700}
+.chip.go{background:var(--teal);border-color:var(--teal);color:#fff}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:24px 0 14px}
+.tab{border:1px solid var(--line);background:var(--card);border-radius:14px;padding:9px 18px;font-weight:700;transition:.2s}
+.tab:hover{border-color:#9ED3D0}.tab[aria-selected=true]{background:var(--teal);border-color:var(--teal);color:#fff}
+.panel{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:640px){.panel,.two,.feat,.pillars,.plans,.road,.demo,.growth{grid-template-columns:1fr!important}}
+.quote{font-size:1.2rem;font-weight:700;line-height:1.4;margin-top:10px}
+.hero{display:grid;grid-template-columns:1.2fr .8fr;gap:40px;align-items:center}
+@media(max-width:700px){.hero{grid-template-columns:1fr}}
+.path{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
+.case .row1{display:flex;justify-content:space-between;align-items:center}
+.ref{font-weight:800;font-size:1.1rem}
+.status{font-size:.78rem;font-weight:700;padding:4px 12px;border-radius:99px;background:var(--sky);color:var(--b1);transition:.3s}
+.status.s1{background:var(--lilac);color:var(--b2)}.status.s2{background:var(--mint);color:var(--b3)}
+.rows{margin:14px 0;display:grid;gap:7px}.rows div{display:flex;justify-content:space-between;font-size:.9rem;border-bottom:1px dashed var(--line);padding-bottom:6px}.rows span:first-child{color:var(--muted)}
+.track{display:flex;gap:6px}.track i{flex:1;height:6px;border-radius:9px;background:var(--line);transition:background .4s}.track i.on{background:var(--teal)}
+.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:26px 0 16px}
+.flow button{background:none;border:0;text-align:left;padding:0}
+.node{display:block;border-radius:14px;border:1px solid var(--line);background:var(--card);font-weight:700;padding:11px 16px;transition:.25s}
+.flow button[aria-selected=true] .node{background:var(--teal);border-color:var(--teal);color:#fff;transform:translateY(-3px)}
+.flow button.done .node{background:var(--teal-s);border-color:var(--line);color:var(--teal-d)}
+.flow small{display:block;margin-top:8px;color:var(--muted);font-size:.82rem;line-height:1.35}
+@media(max-width:640px){.flow{grid-template-columns:1fr 1fr}}
+.goal,.banner,.risk{margin-top:18px;padding:15px 20px;border-radius:16px;font-weight:600}
+.goal{background:var(--sky);color:var(--goalc)}.banner{background:var(--teal-s);color:var(--teal-d);text-align:center}.risk{background:var(--lilac);color:var(--riskc)}
+.feat{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:26px}
+.feat .card{transition:.25s}.feat .card:hover{transform:translateY(-4px);border-color:#9ED3D0}
+.ic{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;margin-bottom:10px;font-weight:800;color:var(--teal-d);background:var(--teal-s)}
+.feat .card:nth-child(2) .ic{background:var(--sky);color:var(--b1)}.feat .card:nth-child(3) .ic{background:var(--lilac);color:var(--b2)}.feat .card:nth-child(4) .ic{background:var(--mint);color:var(--b3)}
+.feat p,.pillars p{color:var(--muted);margin-top:4px}
+.demo{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:24px;align-items:start}
+.steps{display:grid;gap:9px}
+.step{display:flex;gap:13px;align-items:flex-start;text-align:left;width:100%;border:1px solid var(--line);background:var(--card);border-radius:16px;padding:13px 16px;transition:.2s}
+.step b{width:26px;height:26px;border-radius:50%;background:var(--line);display:grid;place-items:center;font-size:.8rem;flex:none}
+.step[aria-selected=true]{border-color:var(--teal);background:var(--teal-s)}.step[aria-selected=true] b{background:var(--teal);color:#fff}
+.step span{display:block;color:var(--muted);font-size:.88rem}
+.btn{border:0;background:var(--teal);color:#fff;font-weight:700;padding:11px 22px;border-radius:99px;margin:14px 8px 0 0;transition:.2s}.btn:hover{background:var(--teal-d)}.btn.ghost{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+.seg{display:inline-flex;background:var(--trk);border-radius:99px;padding:4px;margin-top:20px}
+.seg button{border:0;background:none;border-radius:99px;padding:8px 20px;font-weight:700;color:var(--muted)}.seg button[aria-pressed=true]{background:var(--card);color:var(--teal-d);box-shadow:0 2px 8px -3px rgba(23,40,58,.25)}
+.list{margin:16px 0 0;padding:0;list-style:none;display:grid;gap:8px}
+.list li{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:11px 16px;display:flex;gap:12px;align-items:center}
+.list li::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--teal);flex:none}.list.no li::before{background:#8C9AA8}
+.pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:24px}
+.tag{display:inline-block;margin-top:10px;font-size:.8rem;font-weight:700;padding:3px 12px;border-radius:99px;background:var(--teal-s);color:var(--teal-d)}
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:26px}
+.plan{text-align:left;background:var(--card);border:1.5px solid var(--line);border-radius:20px;padding:22px;transition:.25s}
+.plan:hover{transform:translateY(-4px)}.plan[aria-pressed=true]{border-color:var(--teal);background:var(--teal-s);box-shadow:0 18px 40px -26px rgba(30,142,138,.7)}
+.price{font-size:1.7rem;font-weight:800;letter-spacing:-.02em;margin:8px 0 0}.plan p{color:var(--muted)}.plan ul{margin:10px 0 0;padding-left:18px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}.chips span,.chips button{background:var(--card);border:1px solid var(--line);border-radius:99px;padding:7px 15px;font-size:.88rem;font-weight:600}
+.road{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px}.road .card{padding:16px;border-top:4px solid var(--teal)}.road .card:nth-child(2){border-top-color:#4C7FD0}.road .card:nth-child(3){border-top-color:#7A62D6}
+.bars{margin-top:20px;display:grid;gap:4px}
+.bar{display:grid;grid-template-columns:180px 1fr 110px;gap:14px;align-items:center;background:none;border:0;text-align:left;padding:9px 12px;border-radius:14px;transition:.2s}
+.bar:hover,.bar[aria-pressed=true]{background:var(--card);box-shadow:0 0 0 1px var(--line)}
+.bar .t{height:11px;border-radius:9px;background:var(--trk);overflow:hidden}.bar .t i{display:block;height:100%;width:0;border-radius:9px;background:var(--teal);transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+.live .bar .t i{width:var(--w)}
+.bar:nth-child(2) .t i{background:#4C7FD0}.bar:nth-child(3) .t i{background:#7A62D6}.bar:nth-child(4) .t i{background:#3FA877}.bar:nth-child(5) .t i{background:#6BB4C9}
+.bar em{font-style:normal;font-weight:800;text-align:right;font-size:.9rem}
+@media(max-width:640px){.bar{grid-template-columns:1fr 100px}.bar .t{grid-column:1/-1;order:3}}
+.detail{margin-top:10px;padding:13px 18px;border-radius:16px;background:var(--teal-s);color:var(--teal-d);font-weight:600;min-height:48px}
+.growth{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:24px;align-items:center}
+input[type=range]{width:100%;accent-color:var(--teal);height:28px}
+.ticks{display:flex;justify-content:space-between;font-weight:700;font-size:.88rem;color:var(--muted)}
+.big{font-size:clamp(2.2rem,6vw,3.4rem);font-weight:800;letter-spacing:-.03em;line-height:1.05;margin-top:18px}
+.cols{display:flex;gap:14px;align-items:flex-end;height:190px}.col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px;font-size:.84rem;font-weight:700;color:var(--muted)}
+.col i{display:block;width:100%;border-radius:12px 12px 6px 6px;background:var(--trk);transition:.5s}.col.on i{background:var(--teal)}.col.on{color:var(--teal-d)}
+.ask{max-width:600px;margin:28px auto 0}.ask .chips{justify-content:center}.ask .chips button{transition:.2s}.ask .chips button[aria-pressed=true]{background:var(--teal);border-color:var(--teal);color:#fff}
+.center{text-align:center}.center h2,.center .lead{margin-left:auto;margin-right:auto}
+#orb{position:fixed;right:5vw;bottom:9vh;width:110px;height:110px;perspective:520px;z-index:9;pointer-events:none}
+.o3,.rg,.cu{transform-style:preserve-3d}.o3{position:absolute;inset:0}
+.rg{position:absolute;inset:0;border-radius:50%;border:3px solid var(--teal)}
+.r1{border-color:#4C7FD0;transform:rotateY(0)}.r2{transform:rotateY(60deg)}.r3{border-color:#7A62D6;transform:rotateY(120deg)}
+.cu{position:absolute;left:50%;top:50%;width:36px;height:36px;margin:-18px}
+.cu s{position:absolute;inset:0;border:2px solid var(--teal);background:rgba(30,142,138,.25);border-radius:6px}
+.cu s:nth-child(1){transform:translateZ(18px)}.cu s:nth-child(2){transform:rotateY(180deg) translateZ(18px)}.cu s:nth-child(3){transform:rotateY(90deg) translateZ(18px)}.cu s:nth-child(4){transform:rotateY(-90deg) translateZ(18px)}.cu s:nth-child(5){transform:rotateX(90deg) translateZ(18px)}.cu s:nth-child(6){transform:rotateX(-90deg) translateZ(18px)}
+.top .r{display:flex;gap:10px;align-items:center;pointer-events:auto}
+#th{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--glass);display:grid;place-items:center;font-size:1.05rem;padding:0}
+@media(max-width:640px){.in{padding:0 14px}.card{padding:15px;border-radius:16px}h2{font-size:1.55rem}.lead{font-size:.95rem;margin-top:6px}.tabs{margin:14px 0 10px}.feat,.pillars,.plans,.road,.panel,.demo,.growth{gap:10px}.flow small{display:none}.quote{font-size:1.05rem}.cols{height:120px}.feat{margin-top:16px}#orb{right:10px;bottom:calc(14px + env(safe-area-inset-bottom,0px));scale:.5;transform-origin:bottom right}#hint{left:16px;transform:none;text-align:left}#lab{font-size:.78rem;padding:5px 10px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<div class="top"><span class="brand"><span class="dot"></span>SafeSpace AI</span><div class="r"><span id="lab">Start</span><button id="th" aria-label="Toggle dark mode">☾</button></div></div>
+<nav id="dots" aria-label="Scenes"></nav>
+<div id="orb" aria-hidden="true"><div class="o3"><b class="rg r1"></b><b class="rg r2"></b><b class="rg r3"></b><i class="cu"><s></s><s></s><s></s><s></s><s></s><s></s></i></div></div>
+<div id="hint">Scroll to go deeper<b></b></div>
+<div id="sp"></div>
+
+<div id="stage"><div id="world">
+
+<section class="scene" data-n="Start"><div class="in"><div class="hero">
+<div><p class="small" style="font-weight:700;color:var(--teal-d)">Student safety</p>
+<h1 style="margin-top:8px">Make it safer to speak up.</h1>
+<p class="lead" style="font-size:1.15rem">A trusted path from student concern to human support and campus action.</p>
+<div class="path"><span class="chip">Report</span><span class="chip">Connect</span><span class="chip go">Protect</span></div>
+<p class="small" style="margin-top:24px">Team:[THINKVERZ] &nbsp;•&nbsp; Presenters: [alka,doyal,liyana]</p></div>
+<div class="card case"><div class="row1"><span class="ref">Case SS-1042</span><span class="status" id="hs">Received</span></div>
+<div class="rows"><div><span>Concern</span><span>Repeated harassment</span></div><div><span>Location</span><span>Campus corridor</span></div><div><span>Owner</span><span id="ho">Pending</span></div></div>
+<div class="track" id="ht"><i></i><i></i><i></i></div><p class="small" style="margin-top:12px">Fictional demo data.</p></div>
+</div></div></section>
+
+<section class="scene" data-n="Problem"><div class="in">
+<h2>Speaking up should not feel risky.</h2>
+<p class="lead">Students may stay silent when they fear what happens after they report. Pick a barrier.</p>
+<div class="tabs" id="ptabs"></div><div class="panel" id="ppanel"></div></div></section>
+
+<section class="scene" data-n="The gap"><div class="in">
+<h2>A report is only the first step.</h2>
+<p class="lead">The process can break between reporting, response and prevention. Click through it.</p>
+<div class="flow" id="flow"></div><div class="panel" id="fpanel"></div>
+<div class="goal">Our goal: connect the steps, protect privacy and make follow-up visible.</div></div></section>
+
+<section class="scene" data-n="Solution"><div class="in">
+<h2>One simple path from concern to action.</h2>
+<p class="lead">SafeSpace AI supports students and authorised campus teams in one workflow.</p>
+<div class="feat">
+<div class="card"><div class="ic">1</div><h3>Confidential reporting</h3><p>A clear way to share a concern.</p></div>
+<div class="card"><div class="ic">2</div><h3>AI-assisted triage</h3><p>Suggests a category for human review.</p></div>
+<div class="card"><div class="ic">3</div><h3>Case tracking</h3><p>Shows case reference, owner and status.</p></div>
+<div class="card"><div class="ic">4</div><h3>Prevention insights</h3><p>Highlights patterns without public accusations.</p></div></div>
+<div class="banner">AI assists. People decide. Sensitive reports stay restricted.</div></div></section>
+
+<section class="scene" data-n="Example"><div class="in">
+<h2>What happens after a student reports?</h2>
+<p class="lead">Example: repeated harassment near a campus corridor.</p>
+<div class="demo"><div><div class="steps" id="steps"></div><button class="btn" id="next">Next stage</button><button class="btn ghost" id="reset">Restart</button></div>
+<div class="card case"><div class="row1"><span class="ref">Case SS-1042</span><span class="status" id="ds">Received</span></div>
+<div class="rows"><div><span>Concern</span><span>Repeated harassment</span></div><div><span>Location</span><span>Campus corridor</span></div><div><span>Owner</span><span id="do">Pending</span></div></div>
+<div class="track" id="dt"><i></i><i></i><i></i></div><p id="dn" style="margin-top:14px;font-weight:600"></p>
+<p class="small" style="margin-top:10px">Fictional data. Emergency response is never claimed unless actually confirmed.</p></div></div></div></section>
+
+<section class="scene" data-n="Trust"><div class="in">
+<h2>Safety without surveillance.</h2>
+<p class="lead">Build trust into the product from day one.</p>
+<div class="pillars">
+<div class="card"><h3>Privacy first</h3><p>Collect only what is needed. Restrict access.</p><span class="tag">Private</span></div>
+<div class="card"><h3>Human accountability</h3><p>AI never decides guilt or punishment.</p><span class="tag">Human-led</span></div>
+<div class="card"><h3>Visible follow-up</h3><p>Make case status and next steps clear.</p><span class="tag">Accountable</span></div></div>
+<div class="seg"><button aria-pressed="true" data-m="can">What AI does</button><button aria-pressed="false" data-m="never">What AI never does</button></div>
+<ul class="list" id="ailist"></ul></div></section>
+
+<section class="scene" data-n="Customers"><div class="in">
+<h2>Start with one campus. Prove the value.</h2>
+<p class="lead">Students use it. Institutions sponsor and manage the service.</p>
+<div class="tabs" id="ctabs"></div><div class="panel" id="cpanel"></div>
+<p class="small" style="margin-top:18px"><b>First customers:</b> Private colleges → university groups → schools and education networks.</p></div></section>
+
+<section class="scene" data-n="Pricing"><div class="in">
+<h2>Simple annual pricing for institutions.</h2>
+<p class="lead">Starting assumptions to test with buyers, not validated market prices. Tap a plan.</p>
+<div class="plans" id="plans"></div>
+<div class="chips"><span>Buyer: college / university administration</span><span>Optional onboarding: ₹10k–₹30k</span></div></div></section>
+
+<section class="scene" data-n="Launch plan"><div class="in">
+<h2>Earn trust before scaling.</h2>
+<p class="lead">A focused pilot creates evidence, references and a clearer sales process.</p>
+<div class="flow" id="lflow"></div><div class="panel" id="lpanel"></div>
+<div class="chips"><span>Measure: acknowledgement time</span><span>First action</span><span>Follow-up</span><span>Student trust</span></div></div></section>
+
+<section class="scene" data-n="Roadmap"><div class="in">
+<h2>Prove the need. Prove the product. Then scale.</h2>
+<p class="lead">Each stage should unlock the next one.</p>
+<div class="road">
+<div class="card"><span class="small">0–3 months</span><h3 style="font-size:1.4rem">Prototype</h3><p class="small">Demo + buyer interviews</p></div>
+<div class="card"><span class="small">3–9 months</span><h3 style="font-size:1.4rem">Pilot</h3><p class="small">One campus + measured results</p></div>
+<div class="card"><span class="small">9–18 months</span><h3 style="font-size:1.4rem">Repeat</h3><p class="small">Paid customers + renewal evidence</p></div></div>
+<div class="risk">Key risks: low trust, slow procurement and data exposure. Start small; keep humans accountable.</div></div></section>
+
+<section class="scene" data-n="Partners"><div class="in">
+<h2>Ask for a pilot partner, not just money.</h2>
+<p class="lead">Sponsorship is possible, but never guaranteed.</p>
+<div class="tabs" id="stabs"></div><div class="panel" id="spanel"></div>
+<div class="banner" style="font-weight:600">“Support a 90-day campus pilot with clear outcomes and privacy safeguards.”</div></div></section>
+
+<section class="scene" data-n="Funding"><div class="in">
+<h2>A ₹5 lakh pilot budget.</h2>
+<p class="lead">Illustrative 6–9 month request to build, test and evaluate. Tap a line.</p>
+<div class="bars" id="bars"></div><div class="detail" id="fd">Select a line above.</div>
+<p class="small" style="margin-top:12px">Funding routes: college incubator • eligible grants • CSR / tech credits</p></div></section>
+
+<section class="scene" data-n="Growth"><div class="in">
+<h2>What could growth look like?</h2>
+<p class="lead">Targets only. Revenue depends on winning and retaining paying campuses.</p>
+<div class="growth"><div><input type="range" id="yr" min="1" max="3" value="1" aria-label="Year"><div class="ticks"><span>Year 1</span><span>Year 2</span><span>Year 3</span></div>
+<p class="big" id="gr"></p><p style="font-weight:700" id="gc"></p><p class="small" id="ga"></p></div><div class="cols" id="cols"></div></div>
+<p class="small" style="margin-top:20px">Assumption: average annual contract ₹60k → ₹90k → ₹1.2L. Not a guarantee. No past investment or sales are claimed at concept stage. Replace with verified results as they happen.</p></div></section>
+
+<section class="scene center" data-n="Commitment"><div class="in">
+<p class="small" style="font-weight:700;color:var(--teal-d)">Our commitment</p>
+<h2 style="margin-top:8px">Make it safer to speak up.</h2>
+<p class="lead">SafeSpace AI turns student concerns into accountable follow-up, and recurring concerns into opportunities to prevent harm.</p>
+<div class="ask card"><h3>What would make students trust a reporting system?</h3><div class="chips" id="ask"></div><p class="small" id="an" style="margin-top:12px">Pick one or more.</p></div>
+<p style="margin-top:26px;font-weight:700">Report • Connect • Protect</p><p class="small">Thank you • [Team name] • [Demo link]</p></div></section>
+
+</div></div>
+
+<script>
+const $=s=>document.querySelector(s),RM=matchMedia('(prefers-reduced-motion:reduce)').matches;
+const S=[...document.querySelectorAll('.scene')],N=S.length;
+const two=(a,b)=>`<div class="card">${a}</div><div class="card tint">${b}</div>`;
+const tabs=(id,items,render,panel)=>{const t=$(id),p=$(panel);
+ t.innerHTML=items.map((x,i)=>`<button class="tab" aria-selected="${i==0}" data-i="${i}">${x.n}</button>`).join('');
+ const show=i=>{[...t.children].forEach((b,j)=>b.setAttribute('aria-selected',i==j));p.innerHTML=render(items[i]);fit()};
+ t.onclick=e=>{const b=e.target.closest('button');if(b)show(+b.dataset.i)};show(0)};
+const flow=(id,pid,items,render)=>{const f=$(id),p=$(pid);
+ f.innerHTML=items.map((x,i)=>`<button data-i="${i}" aria-selected="false"><span class="node">${x.n}</span><small>${x.s}</small></button>`).join('');
+ const show=i=>{[...f.children].forEach((b,j)=>{b.setAttribute('aria-selected',i==j);b.classList.toggle('done',j<i)});p.innerHTML=render(items[i]);fit()};
+ f.onclick=e=>{const b=e.target.closest('button');if(b)show(+b.dataset.i)};show(0)};
+
+tabs('#ptabs',[
+ {n:'Fear',h:'Worry about retaliation',q:'“Who will listen? Will anything actually change?”',a:'Confidential reporting with restricted access, so a concern is not exposed.'},
+ {n:'Confusion',h:'Unclear place to ask for help',q:'“Where do I even go with this?”',a:'One clear path from concern to the right person.'},
+ {n:'No closure',h:'Unsure whether action was taken',q:'“Did anyone read my report?”',a:'A case reference, owner and visible status for every report.'}
+],x=>two(`<h3>${x.h}</h3><p class="quote">${x.q}</p>`,`<h3>How SafeSpace answers</h3><p style="margin-top:8px">${x.a}</p>`),'#ppanel');
+
+flow('#flow','#fpanel',[
+ {n:'Report',s:'Student shares a concern',b:'Students stay silent when the path feels unclear or risky.',h:'A private, simple way to share a concern without fear of exposure.'},
+ {n:'Route',s:'Right person receives it',b:'Reports can land with someone who cannot act on them.',h:'AI suggests a category so the right authorised person sees it.'},
+ {n:'Respond',s:'Someone owns the next action',b:'No clear owner means no clear next step.',h:'Every case has a named owner and a status the student can see.'},
+ {n:'Learn',s:'Patterns guide prevention',b:'Lessons stay buried in individual cases.',h:'Recurring concerns become prevention insights, never public accusations.'}
+],x=>two(`<h3>Where it breaks today</h3><p class="small" style="margin-top:8px;font-size:1rem">${x.b}</p>`,`<h3>How SafeSpace helps</h3><p style="margin-top:8px">${x.h}</p>`));
+
+const st=[
+ {n:'Receive',d:'Create a reference number',s:'Received',o:'Pending',t:'Case SS-1042 is created and the student gets a reference.'},
+ {n:'Review',d:'Authorised staff assess report',s:'Assigned for human review',o:'Campus safety team',t:'A person reviews the report. AI only suggested a category.'},
+ {n:'Follow up',d:'Record action and next step',s:'Action recorded',o:'Campus safety team',t:'The action and next step are logged and visible to the student.'}];
+let cur=0;
+const setCase=(i,a)=>{$(a[0]).textContent=st[i].s;$(a[0]).className='status s'+i;$(a[1]).textContent=st[i].o;[...$(a[2]).children].forEach((x,j)=>x.classList.toggle('on',j<=i))};
+const drawDemo=()=>{$('#steps').innerHTML=st.map((x,i)=>`<button class="step" aria-selected="${i==cur}" data-i="${i}"><b>${i+1}</b><div><strong>${x.n}</strong><span>${x.d}</span></div></button>`).join('');
+ setCase(cur,['#ds','#do','#dt']);$('#dn').textContent=st[cur].t;$('#next').textContent=cur==2?'Done':'Next stage'};
+$('#steps').onclick=e=>{const b=e.target.closest('button');if(b){cur=+b.dataset.i;drawDemo()}};
+$('#next').onclick=()=>{cur=Math.min(2,cur+1);drawDemo()};$('#reset').onclick=()=>{cur=0;drawDemo()};drawDemo();
+setCase(0,['#hs','#ho','#ht']);
+if(!RM){let i=0;const t=setInterval(()=>{if(++i>2)return clearInterval(t);setCase(i,['#hs','#ho','#ht'])},1800)}
+
+const ai={can:['Suggest a category for human review','Highlight patterns for prevention','Help route a report to the right team'],never:['Decide guilt or punishment','Make a report public','Share sensitive reports with unauthorised people']};
+const drawAi=m=>{$('#ailist').className='list '+(m=='never'?'no':'');$('#ailist').innerHTML=ai[m].map(x=>`<li>${x}</li>`).join('');fit()};
+document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.seg button').forEach(x=>x.setAttribute('aria-pressed',x==b));drawAi(b.dataset.m)});drawAi('can');
+
+tabs('#ctabs',[
+ {n:'Students',a:['Report concerns','Find support'],b:'A private path and clear follow-up.'},
+ {n:'Campus teams',a:['Manage cases','Track follow-up'],b:'One organised workflow with clear owners.'},
+ {n:'Leadership',a:['See trends','Improve prevention'],b:'Patterns that show where to act before harm repeats.'}
+],x=>two(`<h3>What they do</h3><ul style="margin:8px 0 0;padding-left:18px">${x.a.map(y=>`<li>${y}</li>`).join('')}</ul>`,`<h3>What they get</h3><p style="margin-top:8px">${x.b}</p>`),'#cpanel');
+
+const pl=[{n:'Pilot',p:'₹0',u:'8–12 weeks',d:'Limited campus trial',f:['One campus team','Feedback sessions']},{n:'Campus',p:'₹30k–₹60k',u:'per year',d:'Reporting + case tracking',f:['Confidential reporting','Case status for students']},{n:'Growth',p:'₹75k–₹1.5L',u:'per year',d:'Analytics + more teams',f:['Prevention insights','Multiple teams']}];
+$('#plans').innerHTML=pl.map((x,i)=>`<button class="plan" aria-pressed="${i==1}"><h3>${x.n}</h3><div class="price">${x.p}</div><p>${x.u}</p><p style="margin-top:8px;font-weight:600;color:var(--ink)">${x.d}</p><ul>${x.f.map(y=>`<li>${y}</li>`).join('')}</ul></button>`).join('');
+$('#plans').onclick=e=>{const b=e.target.closest('.plan');if(b)[...$('#plans').children].forEach(x=>x.setAttribute('aria-pressed',x==b))};
+
+flow('#lflow','#lpanel',[
+ {n:'Listen',s:'Interview 10–15 students and decision-makers.',w:'Understand real fears and buying needs.',o:'Validated problem and buyer feedback.'},
+ {n:'Pilot',s:'Test with one campus team.',w:'Run real cases through the workflow.',o:'Working evidence in a live setting.'},
+ {n:'Measure',s:'Track response and follow-up.',w:'Compare response and follow-up before and after.',o:'Numbers that show the value.'},
+ {n:'Convert',s:'Use results to seek a paid contract.',w:'Turn the pilot into a paid annual plan.',o:'References and a clearer sales process.'}
+],x=>two(`<h3>Focus</h3><p style="margin-top:8px">${x.w}</p>`,`<h3>Outcome</h3><p style="margin-top:8px">${x.o}</p>`));
+
+tabs('#stabs',[
+ {n:'Campus partner',g:'Pilot access + staff feedback',w:'Real students, real workflows, honest feedback.'},
+ {n:'Tech partner',g:'Cloud credits + tools',w:'Lowers hosting and AI costs during the pilot.'},
+ {n:'CSR / foundation',g:'Student wellbeing pilot funding',w:'Funds a measurable student wellbeing outcome.'},
+ {n:'Incubator',g:'Mentorship + grant guidance',w:'Opens doors to mentors and eligible grants.'}
+],x=>two(`<h3>What they offer</h3><p class="quote" style="font-size:1.1rem">${x.g}</p>`,`<h3>Why it helps</h3><p style="margin-top:8px">${x.w}</p>`),'#spanel');
+
+const fb=[['Product build','₹1.75L',35,'Web app, case workflow and the triage assistant.'],['Privacy & security','₹1.00L',20,'Access controls, encryption and a security review.'],['Campus pilot','₹0.75L',15,'Onboarding, training and support for the pilot campus.'],['Cloud / AI tools','₹0.50L',10,'Hosting and AI services for the build and pilot.'],['Research + contingency','₹1.00L',20,'Interviews, evaluation and a buffer for surprises.']];
+$('#bars').innerHTML=fb.map((x,i)=>`<button class="bar" data-i="${i}" aria-pressed="false"><strong>${x[0]}</strong><span class="t"><i style="--w:${x[2]*2.5}%"></i></span><em>${x[1]} · ${x[2]}%</em></button>`).join('');
+$('#bars').onclick=e=>{const b=e.target.closest('.bar');if(!b)return;[...$('#bars').children].forEach(x=>x.setAttribute('aria-pressed',x==b));const f=fb[b.dataset.i];$('#fd').textContent=f[0]+': '+f[3]+' (illustrative)'};
+
+const g=[{c:5,r:'₹3L',a:'₹60k'},{c:20,r:'₹18L',a:'₹90k'},{c:60,r:'₹72L',a:'₹1.2L'}];
+$('#cols').innerHTML=g.map((x,i)=>`<div class="col"><span>${x.c}</span><i style="height:${Math.max(x.c/60*140,14)}px"></i><span>Year ${i+1}</span></div>`).join('');
+const drawG=()=>{const i=$('#yr').value-1;$('#gr').textContent=g[i].r+' recurring';$('#gc').textContent=g[i].c+' campuses';$('#ga').textContent='Average annual contract '+g[i].a;[...$('#cols').children].forEach((c,j)=>c.classList.toggle('on',j==i))};
+$('#yr').oninput=drawG;drawG();
+
+$('#ask').innerHTML=['Clear privacy','Humans who respond','Visible case status','Option to stay anonymous'].map(q=>`<button aria-pressed="false">${q}</button>`).join('');
+$('#ask').onclick=e=>{const b=e.target.closest('button');if(!b)return;b.setAttribute('aria-pressed',b.getAttribute('aria-pressed')!='true');const n=document.querySelectorAll('#ask [aria-pressed=true]').length;$('#an').textContent=n?n+' selected. These are exactly what we test in the pilot.':'Pick one or more.'};
+
+const root=document.documentElement,setT=t=>{root.dataset.theme=t;$('#th').textContent=t=='dark'?'☀':'☾'};
+try{setT(localStorage.getItem('t')||'light')}catch(e){setT('light')}
+$('#th').onclick=()=>{const t=root.dataset.theme=='dark'?'light':'dark';setT(t);try{localStorage.setItem('t',t)}catch(e){}};
+/* ---- 3D engine ---- */
+const world=$('#world'),step=()=>innerHeight*.85;
+const shapes=Array.from({length:12},(_,k)=>{const e=document.createElement('i');e.className='sh c'+(k%4)+(k%3==0?' r':'');const s=70+(k*37)%130;
+ Object.assign(e.style,{width:s+'px',height:s+'px',left:((k*41)%92)+'%',top:((k*57)%86)+'%'});world.prepend(e);return{e,base:-k*155,rot:(k*23)%90}});
+$('#dots').innerHTML=S.map((s,i)=>`<button aria-label="${s.dataset.n}" title="${s.dataset.n}"></button>`).join('');
+$('#dots').onclick=e=>{const i=[...$('#dots').children].indexOf(e.target.closest('button'));if(i>=0)scrollTo({top:i*step(),behavior:'smooth'})};
+function fit(){S.forEach(s=>{const n=s.firstElementChild;n.style.transform='none';const k=Math.max(innerWidth<640?.62:.5,Math.min(1.3,(innerHeight-130)/n.offsetHeight,(innerWidth-8)/n.offsetWidth));n.style.transform='scale('+k+')'})}
+function size(){$('#sp').style.height=((N-1)*step()+innerHeight)+'px';fit()}
+let p=0,tx=0,ty=0,cx=0,cy=0;
+addEventListener('resize',size);addEventListener('load',size);size();
+if(matchMedia('(pointer:fine)').matches&&!RM)addEventListener('pointermove',e=>{tx=(e.clientX/innerWidth-.5)*7;ty=-(e.clientY/innerHeight-.5)*5});
+let idle;addEventListener('scroll',()=>{clearTimeout(idle);idle=setTimeout(()=>{const i=Math.round(scrollY/step());if(Math.abs(scrollY-i*step())>6)scrollTo({top:i*step(),behavior:RM?'auto':'smooth'})},170)},{passive:true});
+addEventListener('keydown',e=>{if(e.target.closest('input'))return;const k=e.key,i=Math.round(scrollY/step());
+ if(k=='ArrowRight'||k=='ArrowDown'||k=='PageDown'){e.preventDefault();scrollTo({top:Math.min(N-1,i+1)*step(),behavior:'smooth'})}
+ if(k=='ArrowLeft'||k=='ArrowUp'||k=='PageUp'){e.preventDefault();scrollTo({top:Math.max(0,i-1)*step(),behavior:'smooth'})}});
+let last=-1;
+function frame(){
+ p+=(scrollY/step()-p)*(RM?1:.14);cx+=(tx-cx)*.08;cy+=(ty-cy)*.08;
+ world.style.transform=`rotateX(${cy.toFixed(2)}deg) rotateY(${cx.toFixed(2)}deg)`;
+ S.forEach((s,i)=>{const d=i-p;let z,o;
+  if(d<0){z=d*700;o=Math.max(0,1+d*1.9)}else{z=d*460;o=Math.max(0,1-d*1.7)}
+  s.style.visibility=o>.01?'visible':'hidden';s.style.opacity=o.toFixed(3);
+  s.style.transform=`translate3d(0,${d<0?d*46:0}px,${z.toFixed(1)}px) rotateY(${(d*-14).toFixed(1)}deg)`;
+  s.style.filter=d<-.15?`blur(${Math.min(5,-d*2.6).toFixed(1)}px)`:'none';
+  s.style.pointerEvents=Math.abs(d)<.4?'auto':'none';s.classList.toggle('live',Math.abs(d)<.5)});
+ shapes.forEach(h=>{const z=(((h.base+p*380)%1850)+1850)%1850-2000;const o=Math.min(1,(z+2000)/350,(-120-z)/260);
+  h.e.style.opacity=Math.max(0,o).toFixed(2);h.e.style.transform=`translateZ(${z.toFixed(0)}px) rotateX(${(p*50).toFixed(0)}deg) rotate(${(h.rot+p*18).toFixed(1)}deg)`});
+ $('.o3').style.transform=`rotateX(${(22+p*70).toFixed(1)}deg) rotateY(${(p*220+(RM?0:performance.now()/40)).toFixed(1)}deg)`;
+ const idx=Math.min(N-1,Math.max(0,Math.round(p)));
+ if(idx!=last){last=idx;$('#lab').textContent=(idx+1)+' / '+N+'  ·  '+S[idx].dataset.n;[...$('#dots').children].forEach((b,j)=>b.classList.toggle('on',j==idx))}
+ $('#bar').style.width=(p/(N-1)*100)+'%';$('#hint').style.opacity=p<.3?1:0;
+ requestAnimationFrame(frame)}
+frame();
+</script>
+</body>
+</html>
